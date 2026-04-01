@@ -1,5 +1,9 @@
 # Client-Side Renderer Benchmark (C + WASM + Django)
 
+> [!IMPORTANT]
+> **🚀 AI-GENERATED CODEBASE**  
+> This entire benchmarking application and C/WASM toolchain setup was authored by **Antigravity** and **Gemini**.
+
 This project contains a high-performance, client-side rendering benchmark built with **C, WebAssembly (WASM), WebGL 2.0, and Django**.
 
 The goal of this web application is to test the raw GPU rendering performance of any device that connects to it (such as a laptop, desktop, or mobile phone) natively within their web browser.
