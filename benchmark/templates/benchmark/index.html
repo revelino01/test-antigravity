@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGPU Device Benchmark</title>
+    <!-- Load modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    {% load static %}
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: rgba(20, 25, 40, 0.6);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-primary: #00f2fe;
+            --accent-secondary: #4facfe;
+            --text-main: #f8f9fa;
+            --text-muted: #8b92a5;
+            --glow-color: rgba(0, 242, 254, 0.2);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(79, 172, 254, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(0, 242, 254, 0.08), transparent 25%);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 2rem;
+            width: 90vw;
+            max-width: 1400px;
+            height: 80vh;
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+            opacity: 0.3;
+        }
+
+        .render-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .render-header {
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1, h2 {
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            background: linear-gradient(to right, var(--text-main), var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h1 { font-size: 2rem; }
+        h2 { font-size: 1.5rem; }
+
+        .canvas-wrapper {
+            flex: 1;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            background: #000;
+            position: relative;
+            box-shadow: 0 0 40px var(--glow-color);
+            transition: all 0.4s ease;
+        }
+
+        .canvas-wrapper:hover {
+            box-shadow: 0 0 60px rgba(0, 242, 254, 0.3);
+            border-color: rgba(0, 242, 254, 0.3);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .stats-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            text-shadow: 0 0 20px var(--glow-color);
+        }
+
+        .unit {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .run-btn {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 1.2rem;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--glow-color);
+            margin-top: auto;
+        }
+
+        .run-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 25px rgba(0, 242, 254, 0.4);
+        }
+
+        .run-btn:active {
+            transform: scale(0.98);
+        }
+
+        #status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff3b30;
+            margin-right: 8px;
+            box-shadow: 0 0 10px #ff3b30;
+        }
+
+        .status-ready {
+            background: #34c759 !important;
+            box-shadow: 0 0 10px #34c759 !important;
+        }
+
+        .status-running {
+            background: var(--accent-primary) !important;
+            box-shadow: 0 0 10px var(--accent-primary) !important;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <!-- Main Render Area -->
+        <main class="glass-panel render-container">
+            <div class="render-header">
+                <h1>Vulkan WebGPU Compute Test</h1>
+                <div style="display: flex; align-items: center;">
+                    <span id="status-indicator"></span>
+                    <span id="status-text" style="color: var(--text-muted); font-size: 0.9rem;">Initializing...</span>
+                </div>
+            </div>
+            
+            <div class="canvas-wrapper">
+                <canvas id="canvas" width="800" height="600" oncontextmenu="event.preventDefault()"></canvas>
+            </div>
+        </main>
+
+        <!-- Sidebar Stats -->
+        <aside class="glass-panel stats-sidebar">
+            <div class="render-header">
+                <h2>Performance</h2>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-label">Device FPS</div>
+                <div class="stat-value" id="fps-counter">0<span class="unit"> fps</span></div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-label">Compute Score</div>
+                <div class="stat-value" id="score-counter">---</div>
+            </div>
+
+            <button class="run-btn" id="run-benchmark" disabled>Run Benchmark</button>
+        </aside>
+    </div>
+
+    <!-- The compiled C WebAssembly module -->
+    <script>
+        window.updateFPS = function(fps) {
+            document.getElementById('fps-counter').innerHTML = fps.toFixed(1) + '<span class="unit"> fps</span>';
+            document.getElementById('score-counter').innerText = Math.floor(fps * 142);
+        };
+
+        var Module = {
+            preRun: [],
+            postRun: [
+                function() {
+                    document.getElementById('status-indicator').className = 'status-ready';
+                    document.getElementById('status-text').innerText = 'Rendering';
+                    document.getElementById('run-benchmark').innerText = 'Running...';
+                    document.getElementById('run-benchmark').disabled = true;
+                }
+            ],
+            print: (function() {
+                return function(text) {
+                    if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+                    console.log(text);
+                };
+            })(),
+            canvas: (function() {
+                var canvas = document.getElementById('canvas');
+                // As a default initial behavior, pop up an alert when webgl context is lost.
+                canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+                return canvas;
+            })()
+        };
+    </script>
+    <script async type="text/javascript" src="{% static 'benchmark/main.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.env
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Emscripten SDK
+# Ignore the entire SDK toolchain folder so it isn't pushed to GitHub
+emsdk/
+
+# Emscripten compilation artifacts
+# NOTE: We keep benchmark/static/benchmark/main.js and main.wasm 
+# so the dashboard works out of the box without requiring emcc on the host!
+emcc_out.txt
+errors.txt
