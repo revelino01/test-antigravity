@@ -2632,7 +2632,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('onSbrkGrow');
 }
 var ASM_CONSTS = {
-  69340: ($0) => { updateFPS($0); }
+  70844: ($0) => { updateFPS($0); }
 };
 
 // Imports from the Wasm binary.
